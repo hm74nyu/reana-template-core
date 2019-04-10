@@ -1,0 +1,55 @@
+workflow:
+    version: 0.3.0
+    inputs:
+      files:
+        - $[[codeFile]]
+        - data/names.txt
+      parameters:
+        helloworld: $[[codeFile]]
+        inputfile: data/names.txt
+        outputfile: results/greetings.txt
+        sleeptime: $[[sleeptime]]
+    workflow:
+      type: serial
+      specification:
+        steps:
+          - environment: 'python:2.7'
+            commands:
+              - python "${helloworld}"
+                  --inputfile "${inputfile}"
+                  --outputfile "${outputfile}"
+                  --sleeptime ${sleeptime}
+    outputs:
+      files:
+       - results/greetings.txt
+parameters:
+    - id: codeFile
+      name: 'Code File'
+      datatype: file
+      index: 0
+    - id: sleeptime
+      name: Sleep period (in sec)
+      datatype: int
+      defaultValue: 10
+      index: 1
+    - id: verbose
+      datatype: bool
+      defaultValue: False
+      index: 2
+    - id: frac
+      datatype: decimal
+      index: 6
+    - id: output
+      datatype: record
+      defaultValue: 10
+      index: 3
+    - id: outputType
+      datatype: int
+      defaultValue: 5
+      parent: output
+      index: 5
+    - id: outputTarget
+      datatype: file
+      defaultValue: 'data/output.txt'
+      parent: output
+      index: 4
