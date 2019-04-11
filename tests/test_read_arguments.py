@@ -9,7 +9,7 @@
 
 from unittest import TestCase
 
-from reanatempl import REANATemplate
+from reanatempl import TemplateSpec
 from reanatempl.scanner import Scanner, ListReader
 
 
@@ -18,7 +18,7 @@ class TestReadTemplateArguments(TestCase):
         """Read argument for a template that contains a parameter of data type
         DT_RECORD.
         """
-        template = REANATemplate.load('reanatempl/tests/files/template_with_record.yaml')
+        template = TemplateSpec.load('tests/files/template_with_record.yaml')
         sc = Scanner(reader=ListReader(['ABC.txt', 3, True, 'XYZ.txt', 6, 0.123]))
         arguments = template.read(scanner=sc)
         self.assertEqual(arguments['codeFile'], 'ABC.txt')

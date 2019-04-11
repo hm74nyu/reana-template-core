@@ -28,7 +28,7 @@ LABEL_PARAMETERS = 'parameters'
 LABEL_WORKFLOW = 'workflow'
 
 
-class REANATemplate(object):
+class TemplateSpec(object):
     """A REANA workflow template contains a REANA workflow specification and
     a dictionary of template parameter declarations. Parameter declarations are
     keyed by their unique identifier in the dictionary.
@@ -145,7 +145,7 @@ class REANATemplate(object):
     @staticmethod
     def load(filename, validate=True):
         """Load REANA workflow template declaration from file and return an
-        instance of the REANATemplate class.
+        instance of the TemplateSpec class.
 
         Raises ValueError if the file does not contain a valid workflow
         template.
@@ -160,7 +160,7 @@ class REANATemplate(object):
 
         Returns
         -------
-        reanatempl.base.REANATemplate
+        reanatempl.base.TemplateSpec
         """
         # Load Json object from given file
         obj = load_template(filename)
@@ -172,7 +172,7 @@ class REANATemplate(object):
             if not key in [LABEL_WORKFLOW, LABEL_PARAMETERS]:
                 raise ValueError('invalid element \'' + str(key) + '\'')
         # Return new REANA Template object
-        return REANATemplate(
+        return TemplateSpec(
             obj.get(LABEL_WORKFLOW),
             parameters=obj.get(LABEL_PARAMETERS),
             validate=validate

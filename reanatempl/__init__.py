@@ -4,4 +4,4 @@
 # can redistribute it and/or modify it under the terms of the MIT License; see
 # LICENSE file for more details.
 
-from reanatempl.base import REANATemplate
+from reanatempl.base import TemplateSpec

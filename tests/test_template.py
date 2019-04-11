@@ -4,23 +4,23 @@
 # can redistribute it and/or modify it under the terms of the MIT License; see
 # LICENSE file for more details.
 
-"""Test REANATemplate functionality."""
+"""Test TemplateSpec functionality."""
 
 
 from unittest import TestCase
 
-from reanatempl import REANATemplate
+from reanatempl import TemplateSpec
 
 import reanatempl.parameter.declaration as pd
 
 
-class TestREANATemplate(TestCase):
+class TestTemplateSpec(TestCase):
     def test_duplicate_id(self):
         """Ensure that exception is raised if parameter identifier are not
         unique.
         """
         with self.assertRaises(ValueError):
-            REANATemplate(
+            TemplateSpec(
                 workflow_spec={},
                 parameters=[
                     pd.parameter_declaration('A', index=1),
@@ -34,9 +34,9 @@ class TestREANATemplate(TestCase):
 
     def test_nested_parameters(self):
         """Test proper nesting of parameters for DT_LIST and DT_RECORD."""
-        # Create a new REANATemplate with an empty workflow specification and
+        # Create a new TemplateSpec with an empty workflow specification and
         # a list of six parameters (one record and one list)
-        template = REANATemplate(
+        template = TemplateSpec(
             workflow_spec={},
             parameters=[
                 pd.parameter_declaration('A'),
@@ -66,7 +66,7 @@ class TestREANATemplate(TestCase):
     def test_simple_replace(self):
         """Replace parameter references in simple template with argument values.
         """
-        template = REANATemplate.load('reanatempl/tests/files/template.yaml')
+        template = TemplateSpec.load('tests/files/template.yaml')
         arguments = {'codeFile': 'Hello.py', 'sleeptime': 10}
         spec = template.get_workflow_spec(arguments)
         self.assertEqual(spec['inputs']['files'][0], 'Hello.py')
@@ -79,9 +79,9 @@ class TestREANATemplate(TestCase):
     def test_sort(self):
         """Test the sort functionality of the template list_parameters method.
         """
-        # Create a new REANATemplate with an empty workflow specification and
+        # Create a new TemplateSpec with an empty workflow specification and
         # a list of five parameters
-        template = REANATemplate(
+        template = TemplateSpec(
             workflow_spec={},
             parameters=[
                 pd.parameter_declaration('A', index=1),
