@@ -42,7 +42,9 @@ class TemplateStore(object):
 
     @abstractmethod
     def delete_template(self, identifier):
-        """
+        """Delete all resources that are associated with the template. This will
+        delete the directory on disk that contains the template resources.
+
         Parameters
         ----------
 
@@ -50,7 +52,10 @@ class TemplateStore(object):
         -------
         bool
         """
-        raise NotImplementedError()
+        try:
+            shutil.rmtree(self.directory)
+        except (IOError, OSError) as ex:
+            raise ValueError(ex)
 
     @abstractmethod
     def get_template(self, identifier):

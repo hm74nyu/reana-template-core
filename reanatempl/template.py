@@ -17,6 +17,7 @@ import os
 import shutil
 
 from reanatempl.base import TemplateSpec
+from reanatempl.run import RunHandle
 from reanatempl.util import get_short_identifier, read_object, write_object
 from reanatempl.util import FORMAT_JSON
 
@@ -28,7 +29,7 @@ REANA_ACCESS_TOKEN = 'accessToken'
 
 """Names of subfolders and files in the template handle directory."""
 SETTINGS_FILE = '.settings'
-RUN_FOLDER = 'runs'
+RUNS_FOLDER = 'runs'
 UPLOAD_FOLDER = 'upload'
 WORKFLOW_FOLDER = 'workflow'
 
@@ -62,7 +63,10 @@ class TemplateHandle(object):
     This is an abstract class that is independent of the method that is used to
     store and maintain workflow templates and their associated files.
     """
-    def __init__(self, identifier, directory, template, name=None, description=None):
+    def __init__(
+        self, identifier, directory, template, name=None, description=None,
+        run_id_func=None
+    ):
         """Initialize the unique template identifier, the descriptive template
         name and the optional comprehensive template description.
 
@@ -79,12 +83,16 @@ class TemplateHandle(object):
         description: string, optional
             Comprehensive description explaining the workflow computations to
             a user
+        run_id_func: func, optional
+            Function to create unique run identifier. By default short identifer
+            are used.
         """
         self.identifier = identifier
-        self.directory = directory
+        self.directory = os.path.abspath(directory)
         self.template = template
         self.name = name if not name is None else identifier
         self.description = description
+        self.run_id_func = run_id_func if not run_id_func is None else get_short_identifier
 
     @staticmethod
     def create(
@@ -148,7 +156,7 @@ class TemplateHandle(object):
 
         Returns
         -------
-        reanatempl.handle.TemplateHandle
+        reanatempl.template.TemplateHandle
         """
         # Exactly one of workflow_directory and workflow_repo_url has to be not
         # None. If both are None (or not None) a ValueError is raised.
@@ -167,23 +175,12 @@ class TemplateHandle(object):
         # in_directory. First make sure that the directory exists.
         if not os.path.isdir(in_directory):
             raise ValueError('base directory \'' + str(in_directory) + '\' does not exist or is not a directory')
-        # If we use short identifier there is a small risk that the new
-        # template directory already exists. To prevent the very minimal risk
-        # of an endless loop we raise a ValueError after max_attempts.
-        folder_id = None
-        templ_dir = None
-        attempt = 0
-        while folder_id is None or templ_dir is None:
-            folder_id = id_func()
-            templ_dir = os.path.join(in_directory, folder_id)
-            if os.path.isdir(templ_dir):
-                folder_id = None
-                templ_dir = None
-                attempt += 1
-                if attempt > max_attempts:
-                    raise ValueError('could not create unique template folder')
-        # Create the template folder (this should be unique now)
-        os.mkdir(templ_dir)
+        # Create a new unique folder for the template resources
+        folder_id, templ_dir = create_dir(
+            in_directory,
+            id_func=id_func,
+            max_attempts=max_attempts
+        )
         # Use folder_id as identifier of no identifier was given
         if identifier is None:
             identifier = folder_id
@@ -232,24 +229,21 @@ class TemplateHandle(object):
 
     def create_run(self):
         """Create a placeholder for a new workflow run. The result is an
-        identifier for the run that allows the user to upload files for the
-        workflow run and to execute the workflow by submitting arguments for
+        handle for the run that allows the user to upload files for the
+        workflow run before executing the workflow by submitting arguments for
         the template parameters.
 
         Returns
         -------
-        string
+        reanatempl.run.RunHandle
         """
-        raise NotImplementedError()
-
-    def delete(self):
-        """Delete all resources that are associated with the template. This will
-        delete the directory on disk that contains the template resources.
-        """
-        try:
-            shutil.rmtree(self.directory)
-        except (IOError, OSError) as ex:
-            raise ValueError(ex)
+        # Get runs folder (create it if it does not exists)
+        runs_dir = self.get_runs_dir(create=True)
+        # Create unique subfolder in the runs folder and return the identifier
+        # of the created folder as the run identifier. By default we use short
+        # identifier for runs
+        identifier, directory = create_dir(runs_dir)
+        return RunHandle(identifier=identifier, directory=directory)
 
     def delete_run(self, run_id):
         """Clear all uploaded files and metadata that is associated with the
@@ -265,7 +259,29 @@ class TemplateHandle(object):
         -------
         bool
         """
-        raise NotImplementedError()
+        runs_folder = self.get_runs_dir(create=False)
+        run_folder = os.path.join(runs_folder, run_id)
+        try:
+            shutil.rmtree(run_folder)
+        except (IOError, OSError) as ex:
+            raise ValueError(ex)
+
+    def get_runs_dir(self, create=False):
+        """Get path to directory that contains template runs. Create the
+        directory if it does not exist and the create flag is True.
+
+        Parameters
+        ----------
+        create: bool, optional
+            Create runs folder if it does not exist
+        Returns
+        -------
+        string
+        """
+        runs_dir = os.path.join(self.directory, RUNS_FOLDER)
+        if not os.path.isdir(runs_dir) and create:
+            os.mkdir(runs_dir)
+        return runs_dir
 
     def get_template_spec(self):
         """Get the REANA workflow template specification that is associated with
@@ -289,7 +305,7 @@ class TemplateHandle(object):
 
         Returns
         -------
-        reanatempl.handle.TemplateHandle
+        reanatempl.template.TemplateHandle
         """
         # Raise exception if the given argument is not a directory
         if not os.path.isdir(directory):
@@ -314,33 +330,24 @@ class TemplateHandle(object):
             directory=directory
         )
 
-    def upload_file(self, run_id, file):
-        """
-        """
-        raise NotImplementedError()
-
-    def submit_run(self, run_id, arguments):
-        """Submit a workflow template for execution. This results in the following steps:
-
-        replace parameter
-        create workflow
-        upload files
-        start workflow
-
-        Returns the identifier for the created and submitted REANA workflow.
+    def get_run(self, run_id):
+        """Get handle for run with the given identifier. The result is None if
+        no run with the given identifier exists.
 
         Parameters
         ----------
         run_id: string
             Unique run identifier
-        arguments: dict
-            Dictionary of arguments for template parameter
 
         Returns
         -------
-        string
+        reanatempl.run.RunHandle
         """
-        raise NotImplementedError()
+        run_dir = os.path.join(self.get_runs_dir(), run_id)
+        # Return None if the run does not exist
+        if not os.path.isdir(run_dir):
+            return None
+        return RunHandle(identifier=run_id, directory=run_dir)
 
 
 # ------------------------------------------------------------------------------
@@ -372,6 +379,48 @@ def BACKEND(serverUrl, accessToken):
     # Return dictionary containing server Url and access token
     return {REANA_SERVER_URL: serverUrl, REANA_ACCESS_TOKEN: accessToken}
 
+
+def create_dir(directory, id_func=get_short_identifier, max_attempts=100):
+    """Create a new subfolder in the given directory. The subfolder will have a
+    unique name that is given by the identifier function.
+
+    If we use short identifier there is a small risk that the new directory
+    already exists. To prevent the very minimal risk of an endless loop we
+    raise a ValueError after max_attempts.
+
+    Raises ValueError if the identifier function is not able to return an
+    identifier that does not identifiy an already existing folder.
+
+    Returns the unique identifier and the path to the created folder.
+
+    Parameters
+    ----------
+    directory: string
+        Path to parent directory
+    id_func: func
+        Function to generate template folder identifier
+    max_attempts: int, optional
+        Maximum number of attempts to create a unique template folder
+
+    Returns
+    -------
+    string, string
+    """
+    identifier = None
+    dir_path = None
+    attempt = 0
+    while identifier is None or dir_path is None:
+        identifier = id_func()
+        dir_path = os.path.join(directory, identifier)
+        if os.path.isdir(dir_path):
+            identifier = None
+            dir_path = None
+            attempt += 1
+            if attempt > max_attempts:
+                raise ValueError('could not create unique directory')
+    # Create the new folder (this should be unique now)
+    os.mkdir(dir_path)
+    return identifier, dir_path
 
 def read_template_file(directory, filename=None):
     """Read template file in a given directory. If the filename is None the

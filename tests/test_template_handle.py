@@ -11,7 +11,9 @@ import shutil
 
 from unittest import TestCase
 
-from reanatempl.handle import TemplateHandle, read_template_file, BACKEND, SETTINGS_FILE
+from reanatempl.template import TemplateHandle, read_template_file, BACKEND
+from reanatempl.template import SETTINGS_FILE
+
 
 REPO_URL = 'https://github.com/hm74nyu/reana-template-helloworld-demo.git'
 TEMPLATE_FILE = 'tests/files/template.yaml'
@@ -94,16 +96,6 @@ class TestTemplateHandle(TestCase):
         template = th.get_template_spec()
         self.assertTrue(isinstance(template.workflow_spec, dict))
         self.assertEqual(len(template.parameters), 3)
-
-    def test_delete_handle(self):
-        """Test deleting an existing handle."""
-        th = TemplateHandle.create(workflow_dir=WORKFLOW_DIR, in_directory=TMP_DIR)
-        self.assertEqual(len(os.listdir(TMP_DIR)), 1)
-        th.delete()
-        self.assertEqual(len(os.listdir(TMP_DIR)), 0)
-        # IO error when deleting a non existing template
-        with self.assertRaises(ValueError):
-            th.delete()
 
     def test_invalid_arguments(self):
         """Ensure that ValueErrors are raised when invalid arguments are given
