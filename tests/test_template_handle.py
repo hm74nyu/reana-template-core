@@ -63,6 +63,15 @@ class TestTemplateHandle(TestCase):
         self.assertEqual(th.identifier, 'ABC')
         self.assertEqual(th.name, 'My Name')
         self.assertEqual(th.description, 'A long description')
+        # Load handle from disk to ensure that everything is ok.
+        th = TemplateHandle.load(th.directory)
+        self.assertNotEqual(th.identifier, identifier)
+        self.assertEqual(th.identifier, 'ABC')
+        self.assertEqual(th.name, 'My Name')
+        self.assertEqual(th.description, 'A long description')
+        template = th.get_template_spec()
+        self.assertTrue(isinstance(template.workflow_spec, dict))
+        self.assertEqual(len(template.parameters), 3)
 
     def test_create_handle_from_repo(self):
         """Test creating template handle from a GitHub repository."""
@@ -77,6 +86,24 @@ class TestTemplateHandle(TestCase):
         self.assertEqual(th.name, identifier)
         self.assertIsNone(th.description)
         self.assertTrue(os.path.isfile(os.path.join(th.directory, SETTINGS_FILE)))
+        # Load handle from disk to ensure that everything is ok.
+        th = TemplateHandle.load(th.directory)
+        self.assertEqual(th.identifier, identifier)
+        self.assertEqual(th.name, identifier)
+        self.assertIsNone(th.description)
+        template = th.get_template_spec()
+        self.assertTrue(isinstance(template.workflow_spec, dict))
+        self.assertEqual(len(template.parameters), 3)
+
+    def test_delete_handle(self):
+        """Test deleting an existing handle."""
+        th = TemplateHandle.create(workflow_dir=WORKFLOW_DIR, in_directory=TMP_DIR)
+        self.assertEqual(len(os.listdir(TMP_DIR)), 1)
+        th.delete()
+        self.assertEqual(len(os.listdir(TMP_DIR)), 0)
+        # IO error when deleting a non existing template
+        with self.assertRaises(IOError):
+            th.delete()
 
     def test_invalid_arguments(self):
         """Ensure that ValueErrors are raised when invalid arguments are given
@@ -104,6 +131,27 @@ class TestTemplateHandle(TestCase):
             BACKEND(None, 'ABC')
         with self.assertRaises(ValueError):
             BACKEND('ABC', None)
+
+    def test_read_handle(self):
+        """Test handle read method."""
+        th = TemplateHandle.create(
+            description='My Description',
+            workflow_dir=WORKFLOW_DIR,
+            in_directory=TMP_DIR
+        )
+        th = TemplateHandle.load(th.directory)
+        self.assertEqual(th.identifier, th.name)
+        self.assertEqual(th.description, 'My Description')
+        template = th.get_template_spec()
+        for key in ['names', 'sleeptime', 'waittime']:
+            self.assertTrue(key in template.parameters)
+        # Value error when reading from non existing directory
+        with self.assertRaises(ValueError):
+            TemplateHandle.load(os.path.join(TMP_DIR, 'nononon'))
+        # Value error when settings file is missing
+        os.mkdir(os.path.join(TMP_DIR, 'nononon'))
+        with self.assertRaises(ValueError):
+            TemplateHandle.load(os.path.join(TMP_DIR, 'nononon'))
 
     def test_read_template_file(self):
         """Test finding and reading a template file in a given directory."""

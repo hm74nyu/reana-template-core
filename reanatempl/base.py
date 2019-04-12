@@ -18,7 +18,7 @@ from __future__ import print_function
 
 from reanatempl.parameter.base import TemplateParameter
 from reanatempl.scanner import Scanner
-from reanatempl.util import load_template
+from reanatempl.util import read_object
 
 import reanatempl.parameter.declaration as pd
 
@@ -85,6 +85,38 @@ class TemplateSpec(object):
                     parent = para[pd.LABEL_PARENT]
                     if not parent is None:
                         self.parameters[parent].add_child(self.parameters[p_id])
+
+    @staticmethod
+    def from_dict(obj, validate=True):
+        """Create an instance of the template specification from a given
+        dictionary serialization. Expects a dictionary as created by the
+        .to_dict() method of this class.
+
+        Raises ValueError if an invalid dictionary is given.
+validate
+        Parameters
+        ----------
+        obj: dict
+            Dictionary serialization of a template specification
+
+        Returns
+        -------
+        reanatempl.TemplateSpec
+        -----
+        """
+        # Ensure that the Json object contains at least the 'workflow' element
+        # and at most 'workflow' and 'parameter' elements
+        if not LABEL_WORKFLOW in obj:
+            raise ValueError('missing element \'' + LABEL_WORKFLOW + '\'')
+        for key in obj:
+            if not key in [LABEL_WORKFLOW, LABEL_PARAMETERS]:
+                raise ValueError('invalid element \'' + str(key) + '\'')
+        # Return new REANA Template object
+        return TemplateSpec(
+            obj.get(LABEL_WORKFLOW),
+            parameters=obj.get(LABEL_PARAMETERS),
+            validate=validate
+        )
 
     def get_parameter(self, identifier):
         """Short-cut to access the declaration for a parameter with the given
@@ -162,21 +194,9 @@ class TemplateSpec(object):
         -------
         reanatempl.base.TemplateSpec
         """
-        # Load Json object from given file
-        obj = load_template(filename)
-        # Ensure that the Json object contains at least the 'workflow' element
-        # and at most 'workflow' and 'parameter' elements
-        if not LABEL_WORKFLOW in obj:
-            raise ValueError('missing element \'' + LABEL_WORKFLOW + '\'')
-        for key in obj:
-            if not key in [LABEL_WORKFLOW, LABEL_PARAMETERS]:
-                raise ValueError('invalid element \'' + str(key) + '\'')
-        # Return new REANA Template object
-        return TemplateSpec(
-            obj.get(LABEL_WORKFLOW),
-            parameters=obj.get(LABEL_PARAMETERS),
-            validate=validate
-        )
+        # Load Json object from given file and create a specification instance
+        # from the read object
+        return TemplateSpec.from_dict(read_object(filename), validate=validate)
 
     def read(self, scanner=None):
         """Read values for each of the template parameter using a given input

@@ -37,7 +37,7 @@ def get_short_identifier():
     return get_unique_identifier()[:8]
 
 
-def load_template(filename, format=FORMAT_YAML):
+def read_object(filename, format=FORMAT_YAML):
     """Load a Json object from a file. The file may either be in Yaml or in Json
     format.
 
@@ -52,14 +52,17 @@ def load_template(filename, format=FORMAT_YAML):
     """
     if format.upper() == FORMAT_YAML:
         with open(filename, 'r') as f:
-            return yaml.load(f.read(), Loader=yaml.FullLoader)
+            try:
+                return yaml.load(f.read(), Loader=yaml.FullLoader)
+            except yaml.parser.ParserError as ex:
+                raise ValueError(ex)
     elif format.upper() == FORMAT_JSON:
         with open(filename, 'r') as f:
-            return json.load(f.read())
+            return json.load(f)
     else:
         raise ValueError('unknown data format \'' + str(format) + '\'')
 
-def write_json(filename, obj):
+def write_object(filename, obj, format=FORMAT_YAML):
     """Write given dictionary to file as Json object.
 
     Parameters
@@ -69,5 +72,11 @@ def write_json(filename, obj):
     obj: dict
         Output object
     """
-    with open(filename, 'w') as f:
-        json.dump(obj, f)
+    if format.upper() == FORMAT_YAML:
+        with open(filename, 'w') as f:
+            yaml.dump(obj, f)
+    elif format.upper() == FORMAT_JSON:
+        with open(filename, 'w') as f:
+            json.dump(obj, f)
+    else:
+        raise ValueError('unknown data format \'' + str(format) + '\'')

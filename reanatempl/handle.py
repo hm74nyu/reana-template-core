@@ -17,7 +17,8 @@ import os
 import shutil
 
 from reanatempl.base import TemplateSpec
-from reanatempl.util import get_short_identifier, write_json
+from reanatempl.util import get_short_identifier, read_object, write_object
+from reanatempl.util import FORMAT_JSON
 
 
 """Constants for labels in workflow template metadata files."""
@@ -218,7 +219,8 @@ class TemplateHandle(object):
             settings[LABEL_DESCRIPTION] = description
         if not backend is None:
             settings[LABEL_BACKEND] = backend
-        write_json(os.path.join(templ_dir, SETTINGS_FILE), settings)
+        settings_file = os.path.join(templ_dir, SETTINGS_FILE)
+        write_object(settings_file, settings, format=FORMAT_JSON)
         # Return handle
         return TemplateHandle(
             identifier=identifier,
@@ -239,6 +241,13 @@ class TemplateHandle(object):
         string
         """
         raise NotImplementedError()
+
+    def delete(self):
+        """Delete all resources that are associated with the template. This will
+        delete the directory on disk that contains the template resources.
+        """
+        shutil.rmtree(self.directory)
+
 
     def delete_run(self, run_id):
         """Clear all uploaded files and metadata that is associated with the
@@ -265,6 +274,43 @@ class TemplateHandle(object):
         reanatempl.TemplateSpec
         """
         return self.template
+
+    @staticmethod
+    def load(directory):
+        """Load parameterized workflow information from disk. Expects a
+        directory that contains at least the SETTINSG_FILE and WORKFLOW_FOLDER.
+
+        Parameters
+        ----------
+        directory: string
+            Path to the base directory containing the template information
+
+        Returns
+        -------
+        reanatempl.handle.TemplateHandle
+        """
+        # Raise exception if the given argument is not a directory
+        if not os.path.isdir(directory):
+            raise ValueError('not a directory \'' + str(directory) + '\'')
+        # Raise an exception if the directory does not contain a SETTINGS_FILE
+        settings_file = os.path.join(directory, SETTINGS_FILE)
+        if not os.path.isfile(settings_file):
+            raise ValueError('missing file \'' + SETTINGS_FILE + '\'')
+        # Load template information from settings file. Will raise a ValueError
+        # if the file format is invalid.
+        obj = read_object(settings_file, format=FORMAT_JSON)
+        identifier = obj[LABEL_ID]
+        name = obj[LABEL_NAME]
+        description = None
+        if LABEL_DESCRIPTION in obj:
+            description = obj[LABEL_DESCRIPTION]
+        return TemplateHandle(
+            identifier=identifier,
+            name=name,
+            description=description,
+            template=TemplateSpec.from_dict(obj[LABEL_TEMPLATE]),
+            directory=directory
+        )
 
     def upload_file(self, run_id, file):
         """
