@@ -207,7 +207,7 @@ class TemplateHandle(object):
         except (IOError, OSError, ValueError) as ex:
             # Make sure to cleanup by removing the created template folder
             shutil.rmtree(templ_dir)
-            raise ex
+            raise ValueError(ex)
         # Write settings file
         settings = {
             LABEL_ID: identifier,

@@ -77,7 +77,7 @@ class TestTemplateHandle(TestCase):
             TemplateHandle.create(workflow_dir=TMP_DIR, backend={'serverUrl': 'ABC', 'noName': 1})
         with self.assertRaises(ValueError):
             TemplateHandle.create(workflow_dir=TMP_DIR, in_directory='@#$%^&*()')
-        with self.assertRaises(IOError):
+        with self.assertRaises(ValueError):
             TemplateHandle.create(workflow_dir='@#$%^&*()', in_directory=TMP_DIR)
         self.assertEqual(len(os.listdir(TMP_DIR)), 0)
         os.mkdir(os.path.join(TMP_DIR, fake_id_func()))
