@@ -13,6 +13,7 @@ from unittest import TestCase
 
 from reanatempl.handle import TemplateHandle, read_template_file, BACKEND, SETTINGS_FILE
 
+REPO_URL = 'https://github.com/hm74nyu/reana-template-helloworld-demo.git'
 TEMPLATE_FILE = 'tests/files/template.yaml'
 TMP_DIR = 'tests/.tmp'
 WORKFLOW_DIR = 'tests/files/template'
@@ -63,6 +64,20 @@ class TestTemplateHandle(TestCase):
         self.assertEqual(th.name, 'My Name')
         self.assertEqual(th.description, 'A long description')
 
+    def test_create_handle_from_repo(self):
+        """Test creating template handle from a GitHub repository."""
+        th = TemplateHandle.create(workflow_repo_url=REPO_URL, in_directory=TMP_DIR)
+        template = th.get_template_spec()
+        self.assertTrue(isinstance(template.workflow_spec, dict))
+        self.assertEqual(len(template.parameters), 3)
+        for para in ['names', 'sleeptime', 'waittime']:
+            self.assertTrue(para in template.parameters)
+        identifier = os.path.basename(th.directory)
+        self.assertEqual(th.identifier, identifier)
+        self.assertEqual(th.name, identifier)
+        self.assertIsNone(th.description)
+        self.assertTrue(os.path.isfile(os.path.join(th.directory, SETTINGS_FILE)))
+
     def test_invalid_arguments(self):
         """Ensure that ValueErrors are raised when invalid arguments are given
         to the create method.
@@ -84,6 +99,11 @@ class TestTemplateHandle(TestCase):
         # This should reach max attempta and raise a ValueError
         with self.assertRaises(ValueError):
             TemplateHandle.create(workflow_dir=WORKFLOW_DIR, in_directory=TMP_DIR, id_func=fake_id_func)
+        # Test BACKEND helper arguments
+        with self.assertRaises(ValueError):
+            BACKEND(None, 'ABC')
+        with self.assertRaises(ValueError):
+            BACKEND('ABC', None)
 
     def test_read_template_file(self):
         """Test finding and reading a template file in a given directory."""
