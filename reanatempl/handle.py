@@ -204,7 +204,7 @@ class TemplateHandle(object):
                 directory=templ_wf_dir,
                 filename=template_spec_file
             )
-        except (IOError, ValueError) as ex:
+        except (IOError, OSError, ValueError) as ex:
             # Make sure to cleanup by removing the created template folder
             shutil.rmtree(templ_dir)
             raise ex
