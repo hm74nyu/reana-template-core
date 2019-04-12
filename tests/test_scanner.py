@@ -10,7 +10,7 @@ from standard input.
 
 from unittest import TestCase
 
-from reanatempl.base import TemplateParameter
+from reanatempl.parameter.base import TemplateParameter
 from reanatempl.scanner import Scanner, ListReader
 
 import reanatempl.parameter.declaration as para
@@ -26,31 +26,31 @@ class TestScanner(TestCase):
             identifier='ABC',
             data_type=para.DT_BOOL
         ))).prompt()
-        self.assertEquals(p, 'ABC (bool): ')
+        self.assertEqual(p, 'ABC (bool): ')
         # FILE
         p = TemplateParameter(para.set_defaults(para.parameter_declaration(
             identifier='ABC',
             data_type=para.DT_FILE
         ))).prompt()
-        self.assertEquals(p, 'ABC (filename): ')
+        self.assertEqual(p, 'ABC (filename): ')
         # FLOAT
         p = TemplateParameter(para.set_defaults(para.parameter_declaration(
             identifier='ABC',
             data_type=para.DT_DECIMAL
         ))).prompt()
-        self.assertEquals(p, 'ABC (decimal): ')
+        self.assertEqual(p, 'ABC (decimal): ')
         # INTEGER
         p = TemplateParameter(para.set_defaults(para.parameter_declaration(
             identifier='ABC',
             data_type=para.DT_INTEGER
         ))).prompt()
-        self.assertEquals(p, 'ABC (integer): ')
+        self.assertEqual(p, 'ABC (integer): ')
         # STRING
         p = TemplateParameter(para.set_defaults(para.parameter_declaration(
             identifier='ABC',
             data_type=para.DT_STRING
         ))).prompt()
-        self.assertEquals(p, 'ABC (string): ')
+        self.assertEqual(p, 'ABC (string): ')
 
     def test_scan_default_values(self):
         """Test return of default values when reading empty input."""

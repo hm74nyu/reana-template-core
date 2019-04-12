@@ -250,6 +250,18 @@ class TemplateSpec(object):
                 print(ex)
                 done = False
 
+    def to_dict(self):
+        """Return dictionary serialization for the workflow template object.
+
+        Returns
+        -------
+        dict
+        """
+        return {
+            LABEL_WORKFLOW: self.workflow_spec,
+            LABEL_PARAMETERS: [p.to_dict() for p in self.parameters.values()]
+        }
+
 # ------------------------------------------------------------------------------
 # Helper Methods
 # ------------------------------------------------------------------------------
