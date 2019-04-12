@@ -246,8 +246,10 @@ class TemplateHandle(object):
         """Delete all resources that are associated with the template. This will
         delete the directory on disk that contains the template resources.
         """
-        shutil.rmtree(self.directory)
-
+        try:
+            shutil.rmtree(self.directory)
+        except (IOError, OSError) as ex:
+            raise ValueError(ex)
 
     def delete_run(self, run_id):
         """Clear all uploaded files and metadata that is associated with the

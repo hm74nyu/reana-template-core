@@ -102,7 +102,7 @@ class TestTemplateHandle(TestCase):
         th.delete()
         self.assertEqual(len(os.listdir(TMP_DIR)), 0)
         # IO error when deleting a non existing template
-        with self.assertRaises(IOError):
+        with self.assertRaises(ValueError):
             th.delete()
 
     def test_invalid_arguments(self):
