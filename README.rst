@@ -8,6 +8,9 @@ REANA Workflow Templates
 .. image:: https://coveralls.io/repos/github/hm74nyu/reana-template-core/badge.svg?branch=master
    :target: https://coveralls.io/github/hm74nyu/reana-template-core?branch=master
 
+.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://github.com/hm74nyu/reana-template-core/blob/master/LICENSE
+
 
 About
 =====
