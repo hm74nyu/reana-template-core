@@ -48,11 +48,16 @@ class TestFilestore(TestCase):
         self.assertTrue(os.path.isdir(os.path.join(TMP_DIR, fh.identifier)))
         self.assertTrue(os.path.isfile(fh.filepath))
         self.assertEqual(fh.name, 'schema.json')
+        # Get the file handle
+        fh1 = fs.get_file(fh.identifier)
+        self.assertEqual(fh.identifier, fh1.identifier)
+        self.assertEqual(fh.name, fh1.name)
         # Delete the uploaded file
         result = fs.delete_file(fh.identifier)
         self.assertTrue(result)
         self.assertFalse(os.path.isdir(os.path.join(TMP_DIR, fh.identifier)))
         self.assertFalse(os.path.isfile(fh.filepath))
+        self.assertIsNone(fs.get_file(fh.identifier))
         # Deleting a non existing file returns False
         result = fs.delete_file(fh.identifier)
         self.assertFalse(result)

@@ -10,6 +10,7 @@
 from unittest import TestCase
 
 from reanatempl import TemplateSpec
+from reanatempl.util.filestore import FileHandle
 
 import reanatempl.parameter.declaration as pd
 
@@ -31,6 +32,23 @@ class TestTemplateSpec(TestCase):
                 ],
                 validate=True
             )
+
+    def test_file_argument(self):
+        """Test template specifications having file parameters with and without
+        a constant replacement value.
+        """
+        template = TemplateSpec(
+            workflow_spec={'input': ['$[[fileA]]', '$[[fileB]]']},
+            parameters=[
+                pd.parameter_declaration('fileA', data_type=pd.DT_FILE),
+                pd.parameter_declaration('fileB', data_type=pd.DT_FILE, as_const='names.txt')
+            ],
+            validate=True
+        )
+        arguments = {'fileA': FileHandle('code/Hello.py'), 'fileB': FileHandle('data/inputs.txt')}
+        spec = template.get_workflow_spec(arguments)
+        self.assertEquals(spec['input'][0], 'Hello.py')
+        self.assertEquals(spec['input'][1], 'names.txt')
 
     def test_nested_parameters(self):
         """Test proper nesting of parameters for DT_LIST and DT_RECORD."""
@@ -67,7 +85,7 @@ class TestTemplateSpec(TestCase):
         """Replace parameter references in simple template with argument values.
         """
         template = TemplateSpec.load('tests/files/template.yaml')
-        arguments = {'codeFile': 'Hello.py', 'sleeptime': 10}
+        arguments = {'codeFile': FileHandle('code/Hello.py'), 'sleeptime': 10}
         spec = template.get_workflow_spec(arguments)
         self.assertEqual(spec['inputs']['files'][0], 'helloworld.py')
         self.assertEqual(spec['inputs']['parameters']['helloworld'], 'helloworld.py')
@@ -76,6 +94,7 @@ class TestTemplateSpec(TestCase):
         # Error when argument for mandatory parameter is missing
         with self.assertRaises(ValueError):
             template.get_workflow_spec(dict())
+
     def test_sort(self):
         """Test the sort functionality of the template list_parameters method.
         """

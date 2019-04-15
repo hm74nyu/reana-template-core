@@ -41,6 +41,11 @@ class TemplateStore(object):
         self.id_func = id_func if not id_func is None else get_short_identifier
         # Maintain a dictionary of templates in memory
         self.cache = dict()
+        for name in os.listdir(self.directory):
+            path = os.path.join(self.directory, name)
+            if os.path.isdir(path):
+                th = TemplateHandle.load(path)
+                self.cache[th.identifier] = th
 
     def add_template(
         self, name=None, description=None, backend=None, workflow_dir=None,
@@ -77,7 +82,7 @@ class TemplateStore(object):
             backend=backend,
             workflow_dir=workflow_dir,
             workflow_repo_url=workflow_repo_url,
-            in_directory=self.directory.
+            in_directory=self.directory,
             id_func=self.id_func
         )
         self.cache[handle.identifier] = handle
@@ -102,9 +107,9 @@ class TemplateStore(object):
         if not identifier in self.cache:
             return False
         # Drop the template directory
-        directory = os.path.join(self.directory, identifier)
+        template_dir = os.path.join(self.directory, identifier)
         try:
-            shutil.rmtree(self.directory)
+            shutil.rmtree(template_dir)
         except (IOError, OSError) as ex:
             raise ValueError(ex)
         # Remove template from memory cache
@@ -136,4 +141,4 @@ class TemplateStore(object):
         -------
         list(reanatempl.util.template.base.TemplateHandle)
         """
-        return self.cache.values()
+        return list(self.cache.values())

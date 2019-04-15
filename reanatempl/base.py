@@ -17,8 +17,9 @@ template  parameters with the respective values in the value dictionary.
 from __future__ import print_function
 
 from reanatempl.parameter.base import TemplateParameter
-from reanatempl.util.scanner import Scanner
 from reanatempl.util.base import read_object
+from reanatempl.util.filestore import FileHandle
+from reanatempl.util.scanner import Scanner
 
 import reanatempl.parameter.declaration as pd
 
@@ -259,7 +260,8 @@ class TemplateSpec(object):
                 if para.is_bool():
                     return scanner.next_bool(default_value=para.default_value)
                 elif para.is_file():
-                    return scanner.next_file(default_value=para.default_value)
+                    filename = scanner.next_file(default_value=para.default_value)
+                    return FileHandle(filepath=filename)
                 elif para.is_float():
                     return scanner.next_float(default_value=para.default_value)
                 elif para.is_int():
@@ -366,18 +368,26 @@ def replace_value(value, arguments, parameters):
     -------
     string
     """
-    # Check ff the value matches the template parameter reference pattern
+    # Check if the value matches the template parameter reference pattern
     if value.startswith('$[[') and value.endswith(']]'):
         # Extract variable name.
         var = value[3:-2]
         para = parameters[var]
-        # If the parameter has a constant replace value return that value
+        # If the parameter has a constant value defined use that value as the
+        # replacement
         if para.has_constant():
             return para.get_constant()
         # If arguments contains a value for the variable we return the
-        # associated value from the dictionary.
+        # associated value from the dictionary. Note that there is a special
+        # treatment for file arguments. If case of file arguments the dictionary
+        # value is expected to be a file handle. In this case we return the
+        # file name as the argument value.
         if var in arguments:
-            return arguments[var]
+            arg = arguments[var]
+            if para.is_file():
+                return arg.name
+            else:
+                return arg
         # Return the parameter default value
         return para.default_value
     else:

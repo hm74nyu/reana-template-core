@@ -21,9 +21,9 @@ from reanatempl.util.base import get_unique_identifier
 
 class FileHandle(object):
     """File handle for a file that is associated with a template handle."""
-    def __init__(self, identifier, filepath, file_name):
+    def __init__(self, filepath, identifier=None, file_name=None):
         """Initialize the file identifier, the (full) file path, and the file
-        format.
+        format. The file path is mandatory.
 
 
         Parameters
@@ -35,9 +35,9 @@ class FileHandle(object):
         file_name: string
             Base name of the original file
         """
-        self.identifier = identifier
         self.filepath = os.path.abspath(filepath)
-        self.file_name = file_name
+        self.identifier = identifier if not identifier is None else get_unique_identifier()
+        self.file_name = file_name if not file_name is None else os.path.basename(self.filepath)
 
     @property
     def name(self):
@@ -104,7 +104,7 @@ class SimpleFileStore(object):
             # The uploaded file is the only file in the directory
             file_name = os.listdir(file_dir)[0]
             return FileHandle(
-                identifier,
+                identifier=identifier,
                 filepath=os.path.join(file_dir, file_name),
                 file_name=file_name
             )
@@ -145,7 +145,7 @@ class SimpleFileStore(object):
             if os.path.isdir(dir_name):
                 file_name = os.listdir(dir_name)[0]
                 f_handle = FileHandle(
-                    f_name,
+                    identifier=f_name,
                     filepath=os.path.join(dir_name, file_name),
                     file_name=file_name
                 )
@@ -179,7 +179,7 @@ class SimpleFileStore(object):
         shutil.copyfile(filename, output_file)
         # Add file to file index
         f_handle = FileHandle(
-            identifier,
+            identifier=identifier,
             filepath=output_file,
             file_name=file_name
         )
@@ -207,39 +207,8 @@ class SimpleFileStore(object):
         # Save the file object to the new file path
         file.save(output_file)
         f_handle = FileHandle(
-            identifier,
+            identifier=identifier,
             filepath=output_file,
             file_name=file_name
         )
         return f_handle
-
-
-# ------------------------------------------------------------------------------
-# Helper Methods
-# ------------------------------------------------------------------------------
-
-def get_download_filename(url, info):
-    """Extract a file name from a given Url or request info header.
-
-    Parameters
-    ----------
-    url: string
-        Url that was opened using urllib2.urlopen
-    info: dict
-        Header information returned by urllib2.urlopen
-
-    Returns
-    -------
-    string
-    """
-    # Try to extract the filename from the Url first
-    filename = url[url.rfind('/') + 1:]
-    if '.' in filename:
-        return filename
-    else:
-        if 'Content-Disposition' in info:
-            content = info['Content-Disposition']
-            if 'filename="' in content:
-                filename = content[content.rfind('filename="') + 11:]
-                return filename[:filename.find('"')]
-    return 'download'
