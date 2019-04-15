@@ -11,7 +11,7 @@ import os
 from unittest import TestCase
 
 from reanatempl import TemplateSpec
-from reanatempl.util import read_object, FORMAT_JSON, FORMAT_YAML
+from reanatempl.util.base import read_object, FORMAT_JSON, FORMAT_YAML
 
 import reanatempl.parameter.declaration as pd
 
@@ -66,6 +66,7 @@ class TestLoadTemplate(TestCase):
         p_code = template.get_parameter('codeFile')
         self.assertEqual(p_code.name, 'Code File')
         self.assertEqual(p_code.data_type, pd.DT_FILE)
+        self.assertEqual(p_code.as_constant, 'helloworld.py')
         # Sleep time parameter
         p_sleep = template.get_parameter('sleeptime')
         self.assertEqual(p_sleep.name, 'sleeptime')

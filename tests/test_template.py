@@ -69,8 +69,8 @@ class TestTemplateSpec(TestCase):
         template = TemplateSpec.load('tests/files/template.yaml')
         arguments = {'codeFile': 'Hello.py', 'sleeptime': 10}
         spec = template.get_workflow_spec(arguments)
-        self.assertEqual(spec['inputs']['files'][0], 'Hello.py')
-        self.assertEqual(spec['inputs']['parameters']['helloworld'], 'Hello.py')
+        self.assertEqual(spec['inputs']['files'][0], 'helloworld.py')
+        self.assertEqual(spec['inputs']['parameters']['helloworld'], 'helloworld.py')
         self.assertEqual(spec['inputs']['parameters']['sleeptime'], 10)
         self.assertEqual(spec['inputs']['parameters']['waittime'], 5)
         # Error when argument for mandatory parameter is missing
@@ -93,5 +93,5 @@ class TestTemplateSpec(TestCase):
             validate=True
         )
         # Get list of sorted parameter identifier from listing
-        keys = [p.identifier for p in template.list_parameter()]
+        keys = [p.identifier for p in template.list_parameters()]
         self.assertEqual(keys, ['B', 'C', 'A', 'E', 'D'])

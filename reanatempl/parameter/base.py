@@ -35,6 +35,7 @@ class TemplateParameter(object):
         self.is_required = obj[pd.LABEL_REQUIRED]
         self.values = obj[pd.LABEL_VALUES] if pd.LABEL_VALUES in obj else None
         self.parent = obj[pd.LABEL_PARENT] if pd.LABEL_PARENT in obj else None
+        self.as_constant = obj[pd.LABEL_AS] if pd.LABEL_AS in obj else None
         self.children = children
 
     def add_child(self, para):
@@ -48,6 +49,15 @@ class TemplateParameter(object):
         self.children.append(para)
         self.children.sort(key=lambda p: (p.index, p.identifier))
 
+    def get_constant(self):
+        """Get the value of the as_constant property.
+
+        Returns
+        -------
+        string
+        """
+        return self.as_constant
+        
     def has_children(self):
         """Test if a parameter has children. Only returns True if the list of
         children is not None and not empty.
@@ -59,6 +69,15 @@ class TemplateParameter(object):
         if not self.children is None:
             return len(self.children) > 0
         return False
+
+    def has_constant(self):
+        """True if the as_constant property is not None.
+
+        Returns
+        -------
+        bool
+        """
+        return not self.as_constant is None
 
     def is_bool(self):
         """Test if data type for the parameter declaration is DT_BOOL.

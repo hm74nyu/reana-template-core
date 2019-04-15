@@ -10,7 +10,7 @@
 from unittest import TestCase
 
 from reanatempl import TemplateSpec
-from reanatempl.scanner import Scanner, ListReader
+from reanatempl.util.scanner import Scanner, ListReader
 
 
 class TestReadTemplateArguments(TestCase):

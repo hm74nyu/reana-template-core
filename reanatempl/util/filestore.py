@@ -4,18 +4,19 @@
 # can redistribute it and/or modify it under the terms of the MIT License; see
 # LICENSE file for more details.
 
-"""Handle for resources (i.e., files) that are associated with a workflow
-template runs. Each run maintains a list of uploaded files in subfolders of
-the run folder.
+"""Simple file store class that can be used to maintain files that are uploaded
+via an API. The file store assigns each uploaded file an unique identifier while
+also maintaining the original file name.
 
-For each uploaded file a new subfolder with a unique identifier is created. The
-subfolder will contain the uploaded file as the only entry.
+When creating an instance for a parameterized workflow the user can pass the
+identifier of uploaded files as arguments for file parameters. These will be
+replace with references to the files in the file store.
 """
 
 import os
 import shutil
 
-from reanatempl.util import get_unique_identifier
+from reanatempl.util.base import get_unique_identifier
 
 
 class FileHandle(object):
@@ -49,21 +50,41 @@ class FileHandle(object):
         return self.file_name
 
 
-class RunHandle(object):
-    """A run handle maintains a list of uploaded files for a template run."""
-    def __init__(self, identifier, directory):
-        """Initialize the run identifier and the base directory where files are
-        stored.
+class SimpleFileStore(object):
+    """The simple file store maintains a list of uploaded files. Each file is
+    assigned a unique identifier that can later be used as argument value when
+    creating a workflow instance for a REANA workflow template.
+
+    All files are maintained in subfolders under a given base directory.
+    """
+    def __init__(self, directory):
+        """Initialize the base directory where files are stored.
+
+        Parameters
+        ----------
+        directory : string
+            Path to the base directory.
+        """
+        self.directory = os.path.abspath(directory)
+
+    def delete_file(self, identifier):
+        """Delete file with given identifier. Returns True if file was deleted
+        or False if no such file existed.
 
         Parameters
         ----------
         identifier: string
-            Unique run identifier
-        directory : string
-            Path to the base directory.
+            Unique file identifier
+
+        Returns
+        -------
+        bool
         """
-        self.identifier = identifier
-        self.directory = os.path.abspath(directory)
+        file_dir =self.get_file_dir(identifier)
+        if os.path.isdir(file_dir):
+            shutil.rmtree(file_dir, ignore_errors=True)
+            return True
+        return False
 
     def get_file(self, identifier):
         """Get handle for file with given identifier. Returns None if no file
@@ -76,7 +97,7 @@ class RunHandle(object):
 
         Returns
         -------
-        reanatempl.run.FileHandle
+        reanatempl.util.filestore.FileHandle
         """
         file_dir = self.get_file_dir(identifier)
         if os.path.isdir(file_dir):
@@ -116,7 +137,7 @@ class RunHandle(object):
 
         Returns
         -------
-        list(reanatempl.run.FileHandle)
+        list(reanatempl.util.filestore.FileHandle)
         """
         result = list()
         for f_name in os.listdir(self.directory):
@@ -144,7 +165,7 @@ class RunHandle(object):
 
         Returns
         -------
-        reanatempl.run.FileHandle
+        reanatempl.util.filestore.FileHandle
         """
         # Ensure that the given file exists
         if not os.path.isfile(filename):
@@ -177,7 +198,7 @@ class RunHandle(object):
 
         Returns
         -------
-        reanatempl.run.FileHandle
+        reanatempl.util.filestore.FileHandle
         """
         # Create a new unique identifier for the file.
         identifier = get_unique_identifier()
@@ -191,3 +212,34 @@ class RunHandle(object):
             file_name=file_name
         )
         return f_handle
+
+
+# ------------------------------------------------------------------------------
+# Helper Methods
+# ------------------------------------------------------------------------------
+
+def get_download_filename(url, info):
+    """Extract a file name from a given Url or request info header.
+
+    Parameters
+    ----------
+    url: string
+        Url that was opened using urllib2.urlopen
+    info: dict
+        Header information returned by urllib2.urlopen
+
+    Returns
+    -------
+    string
+    """
+    # Try to extract the filename from the Url first
+    filename = url[url.rfind('/') + 1:]
+    if '.' in filename:
+        return filename
+    else:
+        if 'Content-Disposition' in info:
+            content = info['Content-Disposition']
+            if 'filename="' in content:
+                filename = content[content.rfind('filename="') + 11:]
+                return filename[:filename.find('"')]
+    return 'download'

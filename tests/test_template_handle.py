@@ -11,8 +11,8 @@ import shutil
 
 from unittest import TestCase
 
-from reanatempl.template import TemplateHandle, read_template_file, BACKEND
-from reanatempl.template import SETTINGS_FILE
+from reanatempl.util.template.base import TemplateHandle, read_template_file
+from reanatempl.util.template.base import SETTINGS_FILE, BACKEND
 
 
 REPO_URL = 'https://github.com/hm74nyu/reana-template-helloworld-demo.git'

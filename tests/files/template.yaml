@@ -1,4 +1,4 @@
-workflow:
+template:
     version: 0.3.0
     inputs:
       files:
@@ -27,6 +27,7 @@ parameters:
     - id: codeFile
       name: 'Code File'
       datatype: file
+      as: 'helloworld.py'
     - id: sleeptime
       datatype: int
       defaultValue: 10

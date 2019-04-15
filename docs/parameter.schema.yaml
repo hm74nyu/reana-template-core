@@ -1,4 +1,6 @@
 properties:
+    as:
+        type: string
     datatype:
         type: string
     defaultValue:

@@ -11,7 +11,7 @@ import shutil
 
 from unittest import TestCase
 
-from reanatempl.util import write_object, FORMAT_JSON, FORMAT_YAML
+from reanatempl.util.base import write_object, FORMAT_JSON, FORMAT_YAML
 
 
 TMP_DIR = 'tests/.tmp'

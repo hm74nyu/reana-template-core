@@ -8,7 +8,7 @@
 
 from unittest import TestCase
 
-from reanatempl.scanner import TokenReader, ListReader
+from reanatempl.util.scanner import TokenReader, ListReader
 
 
 class TestTokenReader(TestCase):

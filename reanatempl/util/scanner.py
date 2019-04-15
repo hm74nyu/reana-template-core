@@ -25,7 +25,7 @@ class Scanner(object):
 
         Parameters
         ----------
-        reader: reanatempl.scanner.TokenReader
+        reader: reanatempl.util.scanner.TokenReader
             Reader for input tokens
         """
         self.reader = reader if not reader is None else InputReader()

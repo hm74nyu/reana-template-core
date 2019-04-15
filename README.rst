@@ -64,7 +64,7 @@ REANA Templates are serialized in YAML or JSON format just like REANA workflow s
 
 .. code-block:: yaml
 
-    workflow:
+    template:
         inputs:
           files:
             - code/helloworld.py
@@ -97,7 +97,7 @@ REANA Templates are serialized in YAML or JSON format just like REANA workflow s
           description: Sleep period in seconds
           datatype: int
 
-The template is divided into two top-level elements: **workflow** and **parameters**. The workflow section is a REANA workflow specification. The main difference is that the specification may contain references to template parameters (enclosed in ``$[[...]]``). The parameters section is a list of template parameter declarations. Each parameter declaration has a unique identifier. The identifier is used to reference the parameter from within the workflow specification (e.g., ``$[[sleeptime]]`` to reference the user-provided value for the sleep period). Other elements of the parameter declaration are a human readable short name, a parameter description, and a specification of the data type. Refer to [here]() for a full description of the template parameter declaration syntax.
+The template is divided into two top-level elements: **template** and **parameters**. The template section is a REANA workflow specification. The main difference is that the specification may contain references to template parameters (enclosed in ``$[[...]]``). The parameters section is a list of template parameter declarations. Each parameter declaration has a unique identifier. The identifier is used to reference the parameter from within the workflow specification (e.g., ``$[[sleeptime]]`` to reference the user-provided value for the sleep period). Other elements of the parameter declaration are a human readable short name, a parameter description, and a specification of the data type. Refer to [here]() for a full description of the template parameter declaration syntax.
 
 The detailed parameter declarations are intended to be used by other tools to render forms / gather user input. After a user submits a values we replace these references with the given values to generate a valid workflow specification that can be executed by the REANA workflow engine.
 

@@ -64,7 +64,8 @@ class TestParameterValidation(TestCase):
                 para.enum_value(value=3, text='THREE', is_default=True)
             ],
             parent='DEF',
-            default_value=5
+            default_value=5,
+            as_const='data/names.txt'
         )
         self.assertTrue(isinstance(pd, dict))
         self.assertEqual(pd.get(para.LABEL_ID), 'ABC')
@@ -75,6 +76,7 @@ class TestParameterValidation(TestCase):
         self.assertFalse(pd.get(para.LABEL_REQUIRED))
         self.assertEqual(pd.get(para.LABEL_PARENT), 'DEF')
         self.assertEqual(pd.get(para.LABEL_DEFAULT), 5)
+        self.assertEqual(pd.get(para.LABEL_AS), 'data/names.txt')
         # Valudate value enumeration
         values = pd.get(para.LABEL_VALUES, [])
         self.assertEqual(len(values), 3)

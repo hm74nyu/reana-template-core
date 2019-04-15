@@ -11,7 +11,7 @@ from standard input.
 from unittest import TestCase
 
 from reanatempl.parameter.base import TemplateParameter
-from reanatempl.scanner import Scanner, ListReader
+from reanatempl.util.scanner import Scanner, ListReader
 
 import reanatempl.parameter.declaration as para
 

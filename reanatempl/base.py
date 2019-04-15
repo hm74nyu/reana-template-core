@@ -17,15 +17,15 @@ template  parameters with the respective values in the value dictionary.
 from __future__ import print_function
 
 from reanatempl.parameter.base import TemplateParameter
-from reanatempl.scanner import Scanner
-from reanatempl.util import read_object
+from reanatempl.util.scanner import Scanner
+from reanatempl.util.base import read_object
 
 import reanatempl.parameter.declaration as pd
 
 
 """Labels for top-level elements in REANA Templates."""
 LABEL_PARAMETERS = 'parameters'
-LABEL_WORKFLOW = 'workflow'
+LABEL_TEMPLATE = 'template'
 
 
 class TemplateSpec(object):
@@ -93,7 +93,7 @@ class TemplateSpec(object):
         .to_dict() method of this class.
 
         Raises ValueError if an invalid dictionary is given.
-validate
+
         Parameters
         ----------
         obj: dict
@@ -104,16 +104,16 @@ validate
         reanatempl.TemplateSpec
         -----
         """
-        # Ensure that the Json object contains at least the 'workflow' element
-        # and at most 'workflow' and 'parameter' elements
-        if not LABEL_WORKFLOW in obj:
-            raise ValueError('missing element \'' + LABEL_WORKFLOW + '\'')
+        # Ensure that the Json object contains at least the 'template' element
+        # and at most 'template' and 'parameter' elements
+        if not LABEL_TEMPLATE in obj:
+            raise ValueError('missing element \'' + LABEL_TEMPLATE + '\'')
         for key in obj:
-            if not key in [LABEL_WORKFLOW, LABEL_PARAMETERS]:
+            if not key in [LABEL_TEMPLATE, LABEL_PARAMETERS]:
                 raise ValueError('invalid element \'' + str(key) + '\'')
         # Return new REANA Template object
         return TemplateSpec(
-            obj.get(LABEL_WORKFLOW),
+            obj.get(LABEL_TEMPLATE),
             parameters=obj.get(LABEL_PARAMETERS),
             validate=validate
         )
@@ -162,7 +162,7 @@ validate
         # default value
         return replace_args(self.workflow_spec, arguments, self.parameters)
 
-    def list_parameter(self):
+    def list_parameters(self):
         """Get a sorted list of parameter declarations. Elements are sorted by
         their index value. Ties are broken using the unique parameter
         identifier.
@@ -207,7 +207,7 @@ validate
 
         Parameters
         ----------
-        scanner: reanatempl.scanner.Scanner
+        scanner: reanatempl.util.scanner.Scanner
             Input scanner to read parameter values
 
         Returns
@@ -216,7 +216,7 @@ validate
         """
         sc = scanner if not scanner is None else Scanner()
         arguments = dict()
-        for para in self.list_parameter():
+        for para in self.list_parameters():
             # Skip nested parameter
             if not para.parent is None:
                 continue
@@ -278,7 +278,7 @@ validate
         dict
         """
         return {
-            LABEL_WORKFLOW: self.workflow_spec,
+            LABEL_TEMPLATE: self.workflow_spec,
             LABEL_PARAMETERS: [p.to_dict() for p in self.parameters.values()]
         }
 
@@ -368,12 +368,17 @@ def replace_value(value, arguments, parameters):
     """
     # Check ff the value matches the template parameter reference pattern
     if value.startswith('$[[') and value.endswith(']]'):
-        # Extract variable name. If arguments contains a value for the variable
-        # we return the associated value from the dictionary. Otherwise, the
-        # parameter default value is returned
+        # Extract variable name.
         var = value[3:-2]
+        para = parameters[var]
+        # If the parameter has a constant replace value return that value
+        if para.has_constant():
+            return para.get_constant()
+        # If arguments contains a value for the variable we return the
+        # associated value from the dictionary.
         if var in arguments:
             return arguments[var]
-        return parameters[var].default_value
+        # Return the parameter default value
+        return para.default_value
     else:
         return value

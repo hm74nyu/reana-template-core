@@ -17,9 +17,8 @@ import os
 import shutil
 
 from reanatempl.base import TemplateSpec
-from reanatempl.run import RunHandle
-from reanatempl.util import get_short_identifier, read_object, write_object
-from reanatempl.util import FORMAT_JSON
+from reanatempl.util.base import get_short_identifier, read_object, write_object
+from reanatempl.util.base import FORMAT_JSON
 
 
 """Constants for labels in workflow template metadata files."""
@@ -29,8 +28,6 @@ REANA_ACCESS_TOKEN = 'accessToken'
 
 """Names of subfolders and files in the template handle directory."""
 SETTINGS_FILE = '.settings'
-RUNS_FOLDER = 'runs'
-UPLOAD_FOLDER = 'upload'
 WORKFLOW_FOLDER = 'workflow'
 
 
@@ -156,7 +153,7 @@ class TemplateHandle(object):
 
         Returns
         -------
-        reanatempl.template.TemplateHandle
+        reanatempl.util.template.base.TemplateHandle
         """
         # Exactly one of workflow_directory and workflow_repo_url has to be not
         # None. If both are None (or not None) a ValueError is raised.
@@ -227,62 +224,6 @@ class TemplateHandle(object):
             directory=templ_dir
         )
 
-    def create_run(self):
-        """Create a placeholder for a new workflow run. The result is an
-        handle for the run that allows the user to upload files for the
-        workflow run before executing the workflow by submitting arguments for
-        the template parameters.
-
-        Returns
-        -------
-        reanatempl.run.RunHandle
-        """
-        # Get runs folder (create it if it does not exists)
-        runs_dir = self.get_runs_dir(create=True)
-        # Create unique subfolder in the runs folder and return the identifier
-        # of the created folder as the run identifier. By default we use short
-        # identifier for runs
-        identifier, directory = create_dir(runs_dir)
-        return RunHandle(identifier=identifier, directory=directory)
-
-    def delete_run(self, run_id):
-        """Clear all uploaded files and metadata that is associated with the
-        given run. Returns True if a run with the given identifier existed and
-        False otherwise.
-
-        Parameters
-        ----------
-        run_id: string
-            Unique run identifier
-
-        Returns
-        -------
-        bool
-        """
-        runs_folder = self.get_runs_dir(create=False)
-        run_folder = os.path.join(runs_folder, run_id)
-        try:
-            shutil.rmtree(run_folder)
-        except (IOError, OSError) as ex:
-            raise ValueError(ex)
-
-    def get_runs_dir(self, create=False):
-        """Get path to directory that contains template runs. Create the
-        directory if it does not exist and the create flag is True.
-
-        Parameters
-        ----------
-        create: bool, optional
-            Create runs folder if it does not exist
-        Returns
-        -------
-        string
-        """
-        runs_dir = os.path.join(self.directory, RUNS_FOLDER)
-        if not os.path.isdir(runs_dir) and create:
-            os.mkdir(runs_dir)
-        return runs_dir
-
     def get_template_spec(self):
         """Get the REANA workflow template specification that is associated with
         this object.
@@ -305,7 +246,7 @@ class TemplateHandle(object):
 
         Returns
         -------
-        reanatempl.template.TemplateHandle
+        reanatempl.util.template.base.TemplateHandle
         """
         # Raise exception if the given argument is not a directory
         if not os.path.isdir(directory):
@@ -329,25 +270,6 @@ class TemplateHandle(object):
             template=TemplateSpec.from_dict(obj[LABEL_TEMPLATE]),
             directory=directory
         )
-
-    def get_run(self, run_id):
-        """Get handle for run with the given identifier. The result is None if
-        no run with the given identifier exists.
-
-        Parameters
-        ----------
-        run_id: string
-            Unique run identifier
-
-        Returns
-        -------
-        reanatempl.run.RunHandle
-        """
-        run_dir = os.path.join(self.get_runs_dir(), run_id)
-        # Return None if the run does not exist
-        if not os.path.isdir(run_dir):
-            return None
-        return RunHandle(identifier=run_id, directory=run_dir)
 
 
 # ------------------------------------------------------------------------------

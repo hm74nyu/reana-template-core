@@ -20,6 +20,7 @@ from jsonschema import validate, ValidationError
 # ------------------------------------------------------------------------------
 
 """Labels for elements in the schema of a parameter declaration."""
+LABEL_AS = 'as'
 LABEL_DATATYPE = 'datatype'
 LABEL_DEFAULT = 'defaultValue'
 LABEL_DESCRIPTION = 'description'
@@ -63,7 +64,8 @@ PARAMETER_SCHEMA = {
             {'type': 'string'},
             {'type': 'number'}
         ]},
-        LABEL_INDEX: {'type': 'number'}
+        LABEL_INDEX: {'type': 'number'},
+        LABEL_AS: {'type': 'string'}
     },
     'required': [LABEL_ID]
 }
@@ -124,7 +126,8 @@ def enum_value(value, text=None, is_default=False):
 
 def parameter_declaration(
         identifier, name=None, data_type=DT_STRING, description=None, index=0,
-        required=True, values=None, parent=None, default_value=None
+        required=True, values=None, parent=None, default_value=None,
+        as_const=None
     ):
     """Create a dictionary that contains a module parameter specification.
 
@@ -154,6 +157,9 @@ def parameter_declaration(
     default_value: bool, string, number, optional
         Optional default value for a scalar parameter. Default values for file
         parameters are ignored.
+    as_const: string, None
+        Constant replacement value. This is primarily used to replace the name
+        of uploaded files with a constant value.
 
     Returns
     -------
@@ -179,6 +185,8 @@ def parameter_declaration(
         para[LABEL_VALUES] = values
     if not parent is None:
         para[LABEL_PARENT] = parent
+    if not as_const is None:
+        para[LABEL_AS] = as_const
     # Ignore given default values for file parameters
     if not default_value is None and data_type != DT_FILE:
         para[LABEL_DEFAULT] = default_value
