@@ -99,7 +99,7 @@ class AlternateTemplateEngine(TemplateEngine):
             '/api/workflows/' + workflow_id + '/status',
             dict({'status': 'start', 'access_token': self.access_token})
         )
-        r = requests.put(url)
+        r = requests.put(url, json=dict())
         r.raise_for_status()
         obj = json.loads(r.text)
         print(obj)
