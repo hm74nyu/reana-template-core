@@ -47,8 +47,8 @@ class TestTemplateSpec(TestCase):
         )
         arguments = {'fileA': FileHandle('code/Hello.py'), 'fileB': FileHandle('data/inputs.txt')}
         spec = template.get_workflow_spec(arguments)
-        self.assertEquals(spec['inputs']['files'][0], 'Hello.py')
-        self.assertEquals(spec['inputs']['files'][1], 'names.txt')
+        self.assertEqual(spec['inputs']['files'][0], 'Hello.py')
+        self.assertEqual(spec['inputs']['files'][1], 'names.txt')
         # Get list of upload files
         upload_files = template.get_upload_files(arguments)
         self.assertEqual(len(upload_files), 2)
