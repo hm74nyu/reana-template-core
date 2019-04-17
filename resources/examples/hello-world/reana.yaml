@@ -1,0 +1,22 @@
+inputs:
+  files:
+  - code/helloworld.py
+  - data/names.txt
+  parameters:
+    greeting: Welcome
+    helloworld: code/helloworld.py
+    inputfile: data/names.txt
+    outputfile: results/greetings.txt
+    sleeptime: 10
+outputs:
+  files:
+  - results/greetings.txt
+version: 0.3.0
+workflow:
+  specification:
+    steps:
+    - commands:
+      - python "${helloworld}" --inputfile "${inputfile}" --outputfile "${outputfile}"
+        --greeting ${greeting} --sleeptime ${sleeptime}
+      environment: python:2.7
+  type: serial
