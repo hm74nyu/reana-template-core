@@ -16,6 +16,8 @@ template  parameters with the respective values in the value dictionary.
 
 from __future__ import print_function
 
+import os
+
 from reanatempl.parameter.base import TemplateParameter
 from reanatempl.util.base import read_object
 from reanatempl.util.filestore import FileHandle
@@ -133,6 +135,56 @@ class TemplateSpec(object):
         dict
         """
         return self.parameters.get(identifier)
+
+    def get_upload_files(self, arguments, ensure_file_exists=False):
+        """Get list of files that are defined in the inputs.files section of the
+        workflow specification. Replaces references to template parameters with
+        references to values in the arguments dictionary.
+
+        Raises ValueError if the ensure_file_exists flag is True and any of the
+        local upload files does not exist.
+
+        Parameters
+        ----------
+        arguments: dict
+            Dictionary that associates template parameter identifiers with
+            argument values
+        ensure_file_exists: bool, optional
+            Flag indicating whether existence of upload files if checked
+
+        Returns
+        -------
+        list(reanatempl.base.UploadFileHandle)
+        """
+        files = list()
+        # Ensure that the inputs.files element exists in the workflow
+        # specification
+        if 'inputs' in self.workflow_spec:
+            if 'files' in self.workflow_spec['inputs']:
+                for value in self.workflow_spec['inputs']['files']:
+                    upload_handle = None
+                    if is_parameter(value):
+                        var = get_parameter_name(value)
+                        para = self.get_parameter(var)
+                        if para is None:
+                            raise ValueError('unknwon parameter \'' + var + '\'')
+                        fh = arguments.get(var)
+                        if fh is None:
+                            raise ValueError('missing value for parameter \'' + var + '\'')
+                        if para.has_constant():
+                            target_file = para.get_constant()
+                        else:
+                            target_file = fh.name
+                        upload_handle = UploadFileHandle(
+                            filename=fh.filepath,
+                            target_file=target_file
+                        )
+                    else:
+                        upload_handle = UploadFileHandle(filename=value)
+                    if ensure_file_exists and not os.path.exists(upload_handle.filename):
+                        raise ValueError('file \'' + upload_handle.filename + '\' does not exist')
+                    files.append(upload_handle)
+        return files
 
     def get_workflow_spec(self, arguments):
         """Get REANA workflow specification where template parameters are
@@ -284,9 +336,62 @@ class TemplateSpec(object):
             LABEL_PARAMETERS: [p.to_dict() for p in self.parameters.values()]
         }
 
+
 # ------------------------------------------------------------------------------
-# Helper Methods
+# Helper Classes and Methods
 # ------------------------------------------------------------------------------
+
+class UploadFileHandle(object):
+    """Handle for an input file to the workflow that needs to be uploaded to
+    the REANA server before workflow execution is started. This class is a
+    simple wrapper for a reference to a local file and a target file path.
+    """
+    def __init__(self, filename, target_file=None):
+        """Initialize the filename and upload target path. If the target path is
+        missing it is set to the value of the filename.
+
+        Parameters
+        ----------
+        filename: string
+            Path to the local file
+        target_file: string, optional
+            Target path for uploaded file on server. This path is relative to
+            the working directory of the created workflow
+        """
+        self.filename = os.path.abspath(filename)
+        self.target_file = target_file if not target_file is None else filename
+
+
+def is_parameter(value):
+    """Returns True if the given value is a reference to a template parameter.
+
+    Parameters
+    ----------
+    value: string
+        String value in the workflow specification for a REANA template
+
+    Returns
+    -------
+    bool
+    """
+    # Check if the value matches the template parameter reference pattern
+    return value.startswith('$[[') and value.endswith(']]')
+
+
+def get_parameter_name(value):
+    """Extract the parameter name for a template parameter reference.
+
+    Parameters
+    ----------
+    value: string
+        String value in the workflow specification for a REANA template
+
+    Returns
+    -------
+    string
+    """
+    return value[3:-2]
+
 
 def replace_args(spec, arguments, parameters):
     """Replace template parameter references in the workflow specification
@@ -369,9 +474,9 @@ def replace_value(value, arguments, parameters):
     string
     """
     # Check if the value matches the template parameter reference pattern
-    if value.startswith('$[[') and value.endswith(']]'):
+    if is_parameter(value):
         # Extract variable name.
-        var = value[3:-2]
+        var = get_parameter_name(value)
         para = parameters[var]
         # If the parameter has a constant value defined use that value as the
         # replacement

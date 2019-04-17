@@ -1,0 +1,46 @@
+template:
+    version: 0.3.0
+    inputs:
+      files:
+        - $[[codeFile]]
+        - $[[namesFile]]
+      parameters:
+        helloworld: code/helloworld.py
+        inputfile: data/names.txt
+        outputfile: results/greetings.txt
+        greeting: $[[greeting]]
+        sleeptime: $[[sleeptime]]
+    workflow:
+      type: serial
+      specification:
+        steps:
+          - environment: 'python:2.7'
+            commands:
+              - python "${helloworld}"
+                  --inputfile "${inputfile}"
+                  --outputfile "${outputfile}"
+                  --greeting ${greeting}
+                  --sleeptime ${sleeptime}
+    outputs:
+      files:
+       - results/greetings.txt
+parameters:
+    - id: codeFile
+      name: 'Code File'
+      datatype: file
+      index: 0
+      as: 'code/helloworld.py'
+    - id: namesFile
+      name: 'Names List File'
+      datatype: file
+      index: 1
+      as: 'data/names.txt'
+    - id: sleeptime
+      datatype: int
+      index: 3
+      defaultValue: 10
+    - id: greeting
+      name: Greeting
+      datatype: string
+      index: 2
+      defaultValue: 'Hello'

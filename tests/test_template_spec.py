@@ -38,7 +38,7 @@ class TestTemplateSpec(TestCase):
         a constant replacement value.
         """
         template = TemplateSpec(
-            workflow_spec={'input': ['$[[fileA]]', '$[[fileB]]']},
+            workflow_spec={'inputs': {'files': ['$[[fileA]]', '$[[fileB]]']}},
             parameters=[
                 pd.parameter_declaration('fileA', data_type=pd.DT_FILE),
                 pd.parameter_declaration('fileB', data_type=pd.DT_FILE, as_const='names.txt')
@@ -47,8 +47,17 @@ class TestTemplateSpec(TestCase):
         )
         arguments = {'fileA': FileHandle('code/Hello.py'), 'fileB': FileHandle('data/inputs.txt')}
         spec = template.get_workflow_spec(arguments)
-        self.assertEquals(spec['input'][0], 'Hello.py')
-        self.assertEquals(spec['input'][1], 'names.txt')
+        self.assertEquals(spec['inputs']['files'][0], 'Hello.py')
+        self.assertEquals(spec['inputs']['files'][1], 'names.txt')
+        # Get list of upload files
+        upload_files = template.get_upload_files(arguments)
+        self.assertEqual(len(upload_files), 2)
+        target_files = [fh.target_file for fh in upload_files]
+        self.assertTrue('Hello.py' in target_files)
+        self.assertTrue('names.txt' in target_files)
+        # Value error if we ensure that upload files exist
+        with self.assertRaises(ValueError):
+            template.get_upload_files(arguments, ensure_file_exists=True)
 
     def test_nested_parameters(self):
         """Test proper nesting of parameters for DT_LIST and DT_RECORD."""

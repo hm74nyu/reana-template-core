@@ -10,8 +10,8 @@ from setuptools import setup
 install_requires=[
     'jsonschema',
     'pyyaml>=5.1',
-    'future',
-    'gitpython'
+    'gitpython',
+    'future'
 ]
 
 
